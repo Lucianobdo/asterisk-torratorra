@@ -1,0 +1,129 @@
+; =================================================================
+; ARQUIVO DE CONFIGURAÇÃO PJSIP - TORRA TORRA VEÍCULOS
+; =================================================================
+
+; --- Transportes ---
+; Define como o Asterisk se comunica via SIP. Geralmente, só precisamos de um.
+[transport-udp]
+type=transport
+protocol=udp
+bind=0.0.0.0:5060  ; Escutar em todas as interfaces na porta 5060 UDP
+keep_alive_interval=30
+; --- Templates de Configuração ---
+; Templates ajudam a não repetir as mesmas configurações várias vezes.
+
+[template-ramal](!)
+type=endpoint
+context=interno
+disallow=all
+allow=ulaw
+allow=alaw
+allow=gsm
+
+; >>> NAT / CELULAR <<<
+direct_media=no
+rtp_symmetric=yes
+force_rport=yes
+rewrite_contact=yes
+timers=yes
+
+aors=ramal-aor
+auth=ramal-auth
+
+[ramal-aor](!)
+type=aor
+max_contacts=1
+remove_existing=yes
+qualify_frequency=30
+
+[ramal-auth](!)
+type=auth
+auth_type=userpass
+password=torra123  ; <<<<<<< MUDE ESTA SENHA!
+
+; ===============================================
+; RAMAIS DAS ATENDENTES DE SIMULAÇÃO (LOJA)
+; ===============================================
+[101](template-ramal)
+callerid="Thaynara" <101>
+auth=auth101
+aors=101
+
+[auth101](ramal-auth)
+username=101
+
+[101](ramal-aor)
+
+
+[102](template-ramal)
+callerid="Camila" <102>
+auth=auth102
+aors=102
+
+[auth102](ramal-auth)
+username=102
+
+[102](ramal-aor)
+
+
+[103](template-ramal)
+callerid="Maria" <103>
+auth=auth103
+aors=103
+
+[auth103](ramal-auth)
+username=103
+
+[103](ramal-aor)
+
+
+; ===============================================
+; RAMAIS DOS VENDEDORES (PÁTIO)
+; ===============================================
+[201](template-ramal)
+callerid="Vendedor 01" <201>
+auth=auth201
+aors=201
+
+[auth201](ramal-auth)
+username=201
+
+[201](ramal-aor)
+
+; (Repita o padrão para os outros vendedores 202 a 206)
+; Exemplo para o 202:
+[202](template-ramal)
+callerid="Vendedor 02" <202>
+auth=auth202
+aors=202
+[auth202](ramal-auth) 
+username=202
+
+[202](ramal-aor)
+
+; ... e assim por diante para 203, 204, 205, 206
+
+; ===============================================
+; RAMAIS DOS OUTROS SETORES
+; ===============================================
+[301](template-ramal)
+callerid="Documentacao" <301>
+auth=auth301
+aors=301
+
+[auth301](ramal-auth)
+username=301
+
+[301](ramal-aor)
+
+
+[401](template-ramal)
+callerid="Financeiro" <401>
+auth=auth401
+aors=401
+
+[auth401](ramal-auth)
+username=401
+
+[401](ramal-aor)
+

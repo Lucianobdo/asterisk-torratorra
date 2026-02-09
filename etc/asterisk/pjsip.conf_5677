@@ -1,0 +1,199 @@
+; ================================================================
+; ARQUIVO PJSIP FINAL - TORRA TORRA VEÍCULOS
+; ================================================================
+
+; --- 1. TRANSPORTE (Configuração de Rede e NAT) ---
+[transport-udp]
+type=transport
+protocol=udp
+bind=0.0.0.0:5060
+local_net=10.0.0.0/16
+external_signaling_address=168.138.158.51
+external_media_address=168.138.158.51
+
+; ================================================================
+; SEÇÃO DO TRONCO SIP - E2NET
+; ================================================================
+
+; --- REGISTRO NO PROVEDOR ---
+[reg_e2net]
+type=registration
+transport=transport-udp
+outbound_auth=auth_e2net
+server_uri=sip:sip18.e2net.com.br:5060
+client_uri=sip:6137740802@sip18.e2net.com.br:5060
+contact_user=6137740802
+retry_interval=60
+expiration=3600
+
+; --- AUTENTICAÇÃO DO TRONCO ---
+[auth_e2net]
+type=auth
+auth_type=userpass
+password=P0c*6137740802
+username=6137740802
+
+; --- AOR (Address of Record - Onde o provedor está) ---
+[aor_e2net]
+type=aor
+contact=sip:sip18.e2net.com.br:5060
+;----------TESTANDO PRA RECEBER DA E2NET
+; --- 5. IDENTIFICAÇÃO E ENDPOINT (Configurações de Chamadas) ---
+
+; Esta seção identifica o provedor pelo IP para chamadas de ENTRADA
+[e2net-identify]
+type=identify
+endpoint=e2net
+match=179.127.17.77/32
+
+; Esta é a configuração principal do tronco
+[e2net]
+type=endpoint
+transport=transport-udp
+context=from-cifais
+disallow=all
+allow=alaw,ulaw,g729
+outbound_auth=auth_e2net  ; Autenticação para chamadas de SAÍDA
+aors=aor_e2net
+from_user=6137740802
+from_domain=sip18.e2net.com.br
+rewrite_contact=yes
+force_rport=yes
+direct_media=no
+rtp_symmetric=yes
+
+
+
+; --- ENDPOINT (Configurações de Chamadas e Codecs) ---
+;[e2net]
+;type=endpoint
+;transport=transport-udp
+;context=from-cifais
+;disallow=all
+;allow=alaw,ulaw,g729
+;outbound_auth=auth_e2net
+;aors=aor_e2net
+;from_user=6137740802
+;from_domain=sip18.e2net.com.br
+;rewrite_contact=yes
+;force_rport=yes
+;direct_media=no
+;rtp_symmetric=yes
+;identify_by=ip
+;match=179.127.17.77/32
+
+; ================================================================
+; SEÇÃO DOS RAMAIS INTERNOS
+; ================================================================
+
+; --- Templates de Configuração de Ramais ---
+[template-ramal](!)
+type=endpoint
+context=interno
+disallow=all
+allow=ulaw,alaw,gsm
+rtp_symmetric=yes
+force_rport=yes
+rewrite_contact=yes
+direct_media=no
+aors=ramal-aor
+auth=ramal-auth
+
+[ramal-aor](!)
+type=aor
+max_contacts=3
+
+[ramal-auth](!)
+type=auth
+auth_type=userpass
+password=torra123
+
+; --- Lista de Ramais ---
+[101](template-ramal)
+callerid="Thaynara" <101>
+auth=auth101
+aors=101
+[auth101](ramal-auth)
+username=101
+[101](ramal-aor)
+
+[102](template-ramal)
+callerid="Camila" <102>
+auth=auth102
+aors=102
+[auth102](ramal-auth)
+username=102
+[102](ramal-aor)
+
+[103](template-ramal)
+callerid="Maria" <103>
+auth=auth103
+aors=103
+[auth103](ramal-auth)
+username=103
+[103](ramal-aor)
+
+[201](template-ramal)
+callerid="Vendedor 01" <201>
+auth=auth201
+aors=201
+[auth201](ramal-auth)
+username=201
+[201](ramal-aor)
+
+[202](template-ramal)
+callerid="Vendedor 02" <202>
+auth=auth202
+aors=202
+[auth202](ramal-auth)
+username=202
+[202](ramal-aor)
+
+[203](template-ramal)
+callerid="Vendedor 03" <203>
+auth=auth203
+aors=203
+[auth203](ramal-auth)
+username=203
+[203](ramal-aor)
+
+[204](template-ramal)
+callerid="Vendedor 04" <204>
+auth=auth204
+aors=204
+[auth204](ramal-auth)
+username=204
+[204](ramal-aor)
+
+[205](template-ramal)
+callerid="Vendedor 05" <205>
+auth=auth205
+aors=205
+[auth205](ramal-auth)
+username=205
+[205](ramal-aor)
+
+[206](template-ramal)
+callerid="Vendedor 06" <206>
+auth=auth206
+aors=206
+[auth206](ramal-auth)
+username=206
+[206](ramal-aor)
+
+[301](template-ramal)
+callerid="Documentacao" <301>
+auth=auth301
+aors=301
+[auth301](ramal-auth)
+username=301
+[301](ramal-aor)
+
+[401](template-ramal)
+callerid="Financeiro" <401>
+auth=auth401
+aors=401
+[auth401](ramal-auth)
+username=401
+[401](ramal-aor)
+

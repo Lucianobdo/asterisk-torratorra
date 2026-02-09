@@ -1,0 +1,169 @@
+; ================================================================
+; ARQUIVO DE DIALPLAN FINAL - TORRA TORRA VEÍCULOS
+; ================================================================
+
+[general]
+static=yes
+writeprotect=no
+autofallthrough=yes
+clearglobalvars=no
+priorityjumping=no
+
+[globals]
+; Variáveis globais podem ser definidas aqui se necessário
+
+; ================================================================
+; CONTEXTO PARA CHAMADAS INTERNAS (ORIGINADAS DOS RAMAIS)
+; ================================================================
+[interno]
+
+; --- Teste de Eco ---
+exten => *65,1,NoOp(>> Teste de Eco)
+ same => n,Answer()
+ same => n,Echo()
+ same => n,Hangup()
+
+; --- Teste da URA ---
+exten => 800,1,NoOp(>> Testando a URA a partir do ramal ${CALLERID(num)})
+ same => n,Goto(from-cifais,s,1)
+
+; --- Ligação para Ramais Internos (3 dígitos, começando com 1, 2, 3 ou 4) ---
+exten => _[1-4]XX,1,NoOp(>> Ligando para o ramal PJSIP: ${EXTEN} a partir de ${CALLERID(num)})
+ same => n,Dial(PJSIP/${EXTEN},25)
+ same => n,Goto(resultado-chamada,s-${DIALSTATUS},1)
+
+; --- Ligação para Filas de Atendimento ---
+exten => 5001,1,NoOp(>> Ligando para a Fila de Vendedores)
+ same => n,Queue(fila-vendedores)
+ same => n,Hangup()
+
+exten => 5002,1,NoOp(>> Ligando para a Fila de Simulações)
+ same => n,Queue(fila-simulacoes)
+ same => n,Hangup()
+
+exten => 5003,1,NoOp(>> Ligando para a Fila de Negociação)
+ same => n,Queue(fila-negociacao)
+ same => n,Hangup()
+
+; --- REGRAS DE CHAMADAS EXTERNAS (SAÍDA) ---
+; Para ligar para números fixos locais (com 8 dígitos)
+exten => _[2-5]XXXXXXX,1,NoOp(>> Ligando para Fixo Local)
+ same => n,Dial(PJSIP/${EXTEN}@e2net)
+ same => n,Hangup()
+
+; Para ligar para celulares locais (9 seguido de 8 dígitos)
+exten => _9[6-9]XXXXXXX,1,NoOp(>> Ligando para Celular Local)
+ same => n,Dial(PJSIP/${EXTEN}@e2net)
+ same => n,Hangup()
+
+; Para ligar para DDD (0 + DDD + número)
+exten => _0ZXX.,1,NoOp(>> Ligando para DDD)
+ same => n,Dial(PJSIP/${EXTEN}@e2net)
+ same => n,Hangup()
+
+; --- Tratamento de status de chamada interna ---
+[resultado-chamada]
+exten => s-BUSY,1,NoOp(>> Ramal Ocupado)
+ same => n,Playback(ss-noservice)
+ same => n,Hangup()
+exten => s-NOANSWER,1,NoOp(>> Ramal Não Atendeu)
+ same => n,Playback(ss-noservice)
+ same => n,Hangup()
+exten => s-CHANUNAVAIL,1,NoOp(>> Ramal Indisponível/Não Registrado)
+ same => n,Playback(ss-noservice)
+ same => n,Hangup()
+exten => _s-.,1,NoOp(>> Outro status: ${DIALSTATUS})
+ same => n,Hangup()
+
+; ================================================================
+; CONTEXTO PARA CHAMADAS EXTERNAS (VINDAS DO TRONCO SIP)
+; ================================================================
+; ================================================================
+; CONTEXTO PARA CHAMADAS EXTERNAS (VINDAS DO TRONCO SIP)
+; ================================================================
+[from-cifais]
+
+; Regra para quando o provedor envia a chamada para o número específico
+exten => 6137740802,1,NoOp(>> Chamada externa recebida para ${EXTEN} de ${CALLERID(num)})
+ same => n,Goto(ura-principal,s,1) ; Pula para o início da URA Principal
+
+; Regra "catch-all" para qualquer outra coisa que chegar aqui
+exten => s,1,NoOp(>> Chamada externa recebida (sem DID específico) de ${CALLERID(num)})
+ same => n,Answer()
+ same => n,Wait(1)
+ same => n,Goto(ura-principal,s,1)
+
+; --- MENU PRINCIPAL DA URA ---
+[ura-principal]
+exten => s,1,NoOp(>> Cliente no Menu Principal)
+ same => n,Set(TIMEOUT(digit)=5)
+ same => n,Set(TIMEOUT(response)=10)
+ same => n,Background(torratorra-bemvindo)
+ same => n,Background(torratorra-menu-principal)
+ same => n,WaitExten()
+
+exten => 1,1,NoOp(>> Opção 1: Vendas)
+ same => n,Goto(ura-vendas,s,1)
+
+exten => 2,1,NoOp(>> Opção 2: Documentação)
+ same => n,Playback(torratorra-transf-docs)
+ same => n,Dial(PJSIP/301,30)
+ same => n,Playback(ss-noservice)
+ same => n,Hangup()
+
+exten => 3,1,NoOp(>> Opção 3: Financeiro)
+ same => n,Playback(torratorra-transf-financeiro)
+ same => n,Dial(PJSIP/401,30)
+ same => n,Playback(ss-noservice)
+ same => n,Hangup()
+
+exten => 9,1,NoOp(>> Opção 9: Falar com Vendas Direto)
+ same => n,Playback(torratorra-transf-geral-vendas)
+ same => n,Queue(fila-vendedores)
+ same => n,Hangup()
+
+exten => i,1,NoOp(>> Opção Inválida)
+ same => n,Playback(pbx-invalid)
+ same => n,Goto(ura-principal,s,1)
+
+exten => t,1,NoOp(>> Tempo Esgotado)
+ same => n,Playback(vm-goodbye)
+ same => n,Hangup()
+
+; --- SUBMENU DE VENDAS ---
+[ura-vendas]
+exten => s,1,NoOp(>> Cliente no Menu de Vendas)
+ same => n,Set(TIMEOUT(digit)=5)
+ same => n,Set(TIMEOUT(response)=10)
+ same => n,Background(torratorra-menu-vendas)
+ same => n,WaitExten()
+
+exten => 1,1,NoOp(>> Vendas - Opção 1: Estoque)
+ same => n,Playback(torratorra-transf-vendas)
+ same => n,Queue(fila-vendedores)
+ same => n,Hangup()
+
+exten => 2,1,NoOp(>> Vendas - Opção 2: Simulação)
+ same => n,Playback(torratorra-agiliza-simulacao)
+ same => n,Read(CPF,torratorra-digite-cpf,11)
+ same => n,Read(NASC,torratorra-digite-nascimento,8)
+ same => n,Playback(torratorra-obrigado-transferindo)
+ same => n,Queue(fila-simulacoes)
+ same => n,Hangup()
+
+exten => 3,1,NoOp(>> Vendas - Opção 3: Negociação em Andamento)
+ same => n,Playback(torratorra-transf-negociacao)
+ same => n,Queue(fila-negociacao)
+ same => n,Hangup()
+
+exten => 9,1,NoOp(>> Voltar ao menu anterior)
+ same => n,Goto(ura-principal,s,1)
+
+exten => i,1,NoOp(>> Opção Inválida no Menu Vendas)
+ same => n,Playback(pbx-invalid)
+ same => n,Goto(ura-vendas,s,1)
+
+exten => t,1,NoOp(>> Tempo Esgotado no Menu Vendas)
+ same => n,Playback(vm-goodbye)
+ same => n,Hangup()
+

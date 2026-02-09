@@ -1,0 +1,54 @@
+#!/usr/bin/env python3
+import sys
+import requests
+import json
+
+# Configurações da Evolution API na Loophost (URL Externa)
+EVO_URL = "https://pbx3.torratorraveiculos.com.br/message/sendText/torra_torra"
+EVO_KEY = "944E37257396-45F7-BCAE-30CFA1F1E556"
+
+def enviar_whatsapp( ):
+    if len(sys.argv) < 6:
+        return
+
+    cpf = sys.argv[1]
+    nascimento = sys.argv[2]
+    cnh = "Sim" if sys.argv[3] == "1" else "Não"
+    cliente_fone = sys.argv[4]
+    vendedor_fone = sys.argv[5]
+
+    # Formata o número do vendedor (garante que tenha o DDI 55)
+    if not vendedor_fone.startswith('55'):
+        vendedor_fone = '55' + vendedor_fone
+
+    mensagem = (
+        f"🚗 *NOVO LEAD - TORRA TORRA*\n\n"
+        f"👤 *Cliente:* {cliente_fone}\n"
+        f"📄 *CPF:* {cpf}\n"
+        f"📅 *Nascimento:* {nascimento}\n"
+        f"🪪 *Possui CNH:* {cnh}\n\n"
+        f"⚡ _Atenda o cliente agora mesmo!_"
+    )
+
+    payload = {
+        "number": vendedor_fone,
+        "text": mensagem,
+        "delay": 1000,
+        "linkPreview": False
+    }
+
+    headers = {
+        "Content-Type": "application/json",
+        "apikey": EVO_KEY
+    }
+
+    try:
+        response = requests.post(EVO_URL, json=payload, headers=headers)
+        with open('/var/log/asterisk/whatsapp_agi.log', 'a') as f:
+            f.write(f"Envio para {vendedor_fone}: {response.status_code} - {response.text}\n")
+    except Exception as e:
+        with open('/var/log/asterisk/whatsapp_agi.log', 'a') as f:
+            f.write(f"Erro ao enviar: {str(e)}\n")
+
+if __name__ == "__main__":
+    enviar_whatsapp()

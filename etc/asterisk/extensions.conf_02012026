@@ -1,0 +1,144 @@
+; =================================================================
+; ARQUIVO DE DIALPLAN (URA COMPLETA) - TORRA TORRA VEÍCULOS
+; VERSÃO FINAL COM MENSAGENS DE TRANSIÇÃO
+; =================================================================
+
+[general]
+static=yes
+writeprotect=no
+autofallthrough=yes
+clearglobalvars=no
+
+; =================================================================
+; CONTEXTO [publico] - Ponto de entrada para chamadas externas
+; =================================================================
+[publico]
+exten => s,1,NoOp(>> Chamada externa recebida de ${CALLERID(num)})
+ same => n,Answer()
+ same => n,Wait(1)
+ same => n,Goto(ura-principal,s,1)
+
+; =================================================================
+; CONTEXTO [ura-principal] - O MENU PRINCIPAL
+; =================================================================
+[ura-principal]
+exten => s,1,NoOp(>> Cliente no Menu Principal)
+ same => n,Set(TIMEOUT(digit)=5)
+ same => n,Set(TIMEOUT(response)=10)
+ same => n,Background(torratorra-bemvindo)
+ same => n,Background(torratorra-menu-principal)
+ same => n,WaitExten()
+
+exten => 1,1,NoOp(>> Opção 1: Vendas)
+ same => n,Goto(ura-vendas,s,1)
+
+exten => 2,1,NoOp(>> Opção 2: Documentação)
+ same => n,Playback(torratorra-transf-docs) ; << ÁUDIO DE TRANSIÇÃO
+ same => n,Dial(PJSIP/301,30)
+ same => n,Playback(ss-noservice) ; Toca se o ramal não atender/estiver ocupado
+ same => n,Hangup()
+
+exten => 3,1,NoOp(>> Opção 3: Financeiro)
+ same => n,Playback(torratorra-transf-financeiro) ; << ÁUDIO DE TRANSIÇÃO
+ same => n,Dial(PJSIP/401,30)
+ same => n,Playback(ss-noservice)
+ same => n,Hangup()
+
+exten => 9,1,NoOp(>> Opção 9: Falar com Vendedor)
+ same => n,Playback(torratorra-transf-geral-vendas) ; << ÁUDIO DE TRANSIÇÃO
+ same => n,Queue(fila-vendedores)
+ same => n,Hangup()
+
+exten => i,1,Playback(pbx-invalid)
+ same => n,Goto(s,1)
+
+exten => t,1,Playback(vm-goodbye)
+ same => n,Hangup()
+
+; =================================================================
+; CONTEXTO [ura-vendas] - O SUBMENU DE VENDAS
+; =================================================================
+[ura-vendas]
+exten => s,1,NoOp(>> Cliente no Submenu de Vendas)
+ same => n,Set(TIMEOUT(digit)=5)
+ same => n,Set(TIMEOUT(response)=10)
+ same => n,Background(torratorra-menu-vendas)
+ same => n,WaitExten()
+
+exten => 1,1,NoOp(>> Opção 1.1: Info Veículos)
+ same => n,Playback(torratorra-transf-vendas) ; << ÁUDIO DE TRANSIÇÃO
+ same => n,Queue(fila-vendedores)
+ same => n,Hangup()
+
+exten => 2,1,NoOp(>> Opção 1.2: Nova Simulação)
+ same => n,Goto(coleta-dados-simulacao,s,1)
+
+exten => 3,1,NoOp(>> Opção 1.3: Venda em Andamento)
+ same => n,Playback(torratorra-transf-negociacao) ; << ÁUDIO DE TRANSIÇÃO
+ same => n,Queue(fila-negociacao)
+ same => n,Hangup()
+
+exten => i,1,Playback(pbx-invalid)
+ same => n,Goto(s,1)
+
+exten => t,1,Goto(ura-principal,s,1)
+
+; =================================================================
+; CONTEXTO [coleta-dados-simulacao]
+; =================================================================
+[coleta-dados-simulacao]
+exten => s,1,NoOp(>> Cliente no fluxo de Coleta de Dados)
+ same => n,Answer()
+ same => n,Playback(torratorra-agiliza-simulacao)
+ same => n,Read(CPF_CLIENTE,torratorra-digite-cpf,11,,2,5)
+ same => n,SayDigits(${CPF_CLIENTE})
+ same => n,Read(NASC_CLIENTE,torratorra-digite-nascimento,8,,2,5)
+ same => n,SayDigits(${NASC_CLIENTE})
+ same => n,NoOp(DADOS COLETADOS: CPF=${CPF_CLIENTE}, NASC=${NASC_CLIENTE}, TEL=${CALLERID(num)})
+ ; AQUI ENTRARÁ O SCRIPT DE INTEGRAÇÃO COM WHATSAPP/CRM
+ same => n,Playback(torratorra-obrigado-transferindo)
+ same => n,Queue(fila-simulacoes)
+ same => n,Hangup()
+
+; =================================================================
+; CONTEXTO [interno] - Mantido para chamadas e testes internos
+; =================================================================
+[interno]
+; Ligar para qualquer ramal
+exten => _[1-4]XX,1,Dial(PJSIP/${EXTEN},25)
+ same => n,Hangup()
+
+; Testar a URA a partir de um ramal interno
+exten => 800,1,NoOp(>> Testando a URA a partir do ramal ${CALLERID(num)})
+ same => n,Goto(publico,s,1)
+
+; Testar filas
+exten => 5001,1,Queue(fila-vendedores)
+exten => 5002,1,Queue(fila-simulacoes)
+exten => 5003,1,Queue(fila-negociacao)
+
+; Teste de eco
+exten => *65,1,Playback(demo-echotest)
+ same => n,Echo()
+ same => n,Hangup()
+; --- REGRAS DE CHAMADAS EXTERNAS (SAÍDA) ---
+
+; Para ligar para números fixos locais (com 8 ou 9 dígitos)
+exten => _[2-5]XXXXXXX,1,NoOp(>> Ligando para Fixo Local)
+ same => n,Dial(PJSIP/${EXTEN}@e2net-trunk)
+ same => n,Hangup()
+
+exten => _9[2-5]XXXXXXX,1,NoOp(>> Ligando para Fixo Local com 9)
+ same => n,Dial(PJSIP/${EXTEN}@e2net-trunk)
+ same => n,Hangup()
+
+; Para ligar para celulares locais (9 seguido de 8 dígitos)
+exten => _9[6-9]XXXXXXX,1,NoOp(>> Ligando para Celular Local)
+ same => n,Dial(PJSIP/${EXTEN}@e2net-trunk)
+ same => n,Hangup()
+
+; Para ligar para DDD (0 + DDD + número)
+exten => _0ZXX.,1,NoOp(>> Ligando para DDD)
+ same => n,Dial(PJSIP/${EXTEN}@e2net-trunk)
+ same => n,Hangup()
+

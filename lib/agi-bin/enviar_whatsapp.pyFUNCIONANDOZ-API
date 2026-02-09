@@ -1,0 +1,82 @@
+#!/var/lib/asterisk/python-venv/whatsapp/bin/python3
+# -*- coding: utf-8 -*-
+
+import sys
+from asterisk.agi import AGI
+import requests
+import logging
+
+# --- CONFIGURAÇÕES ---
+ZAPI_INSTANCIA = "3ECD69B2D42B52EA7E312E3187FA4915"
+ZAPI_TOKEN = "F0CE8EE6722BAAB8876624BA"       # Token Longo
+CLIENT_TOKEN = "Fdaaa1bc50e174f4fa89c0c260539201fS" # Token de Segurança
+
+# Quem recebe o Lead (Vendedores)
+TELEFONE_DESTINO = "5561984181458"
+# --- FIM ---
+
+logging.basicConfig(filename='/var/log/asterisk/whatsapp_agi.log', level=logging.INFO,
+                    format='%(asctime)s - %(levelname)s - %(message)s')
+
+def enviar_mensagem_zapi(cpf, nasc, cnh, telefone_cliente):
+    url = f"https://api.z-api.io/instances/{ZAPI_INSTANCIA}/token/{ZAPI_TOKEN}/send-text"
+
+    # Formata a CNH para ficar bonito na mensagem
+    possui_cnh = "✅ Sim" if cnh == "1" else "❌ Não"
+
+    # MENSAGEM PROFISSIONAL PARA A EQUIPE DE VENDAS
+    mensagem = (
+        f"🚨 *NOVA OPORTUNIDADE DE VENDA* 🚨\n\n"
+        f"O cliente acabou de preencher os dados na URA e está na fila!\n\n"
+        f"👤 *Cliente:* {telefone_cliente}\n"
+        f"📄 *CPF:* {cpf}\n"
+        f"📅 *Nasc:* {nasc}\n"
+        f"🚗 *CNH:* {possui_cnh}\n\n"
+        f"👉 *Ação:* Atenda a chamada na fila 'Simulações' agora!"
+    )
+
+    payload = {"phone": TELEFONE_DESTINO, "message": mensagem}
+    
+    headers = {
+        "Content-Type": "application/json",
+        "Client-Token": CLIENT_TOKEN
+    }
+
+    try:
+        logging.info(f"Enviando lead {telefone_cliente} para o WhatsApp...")
+        response = requests.post(url, json=payload, headers=headers)
+        response.raise_for_status()
+        logging.info("Lead enviado com sucesso!")
+        return True
+    except Exception as e:
+        logging.error(f"Erro ao notificar equipe: {e}")
+        return False
+
+def main():
+    agi = AGI()
+    try:
+        # Pega os dados que vieram do extensions.conf
+        # sys.argv[0] é o nome do script
+        # sys.argv[1] é o CPF
+        # sys.argv[2] é o Nascimento
+        # sys.argv[3] é a CNH
+        
+        cpf_cliente = sys.argv[1] if len(sys.argv) > 1 else "Não informado"
+        nasc_cliente = sys.argv[2] if len(sys.argv) > 2 else "Não informado"
+        cnh_cliente = sys.argv[3] if len(sys.argv) > 3 else "0"
+
+        telefone_cliente = agi.env.get('agi_callerid', 'Desconhecido')
+
+        # Formata Data de Nascimento (Se vier 06041987 vira 06/04/1987)
+        if len(nasc_cliente) == 8:
+            nasc_formatado = f"{nasc_cliente[:2]}/{nasc_cliente[2:4]}/{nasc_cliente[4:]}"
+        else:
+            nasc_formatado = nasc_cliente
+
+        enviar_mensagem_zapi(cpf_cliente, nasc_formatado, cnh_cliente, telefone_cliente)
+
+    except Exception as e:
+        logging.error(f"Erro fatal no script: {e}")
+
+if __name__ == "__main__":
+    main()

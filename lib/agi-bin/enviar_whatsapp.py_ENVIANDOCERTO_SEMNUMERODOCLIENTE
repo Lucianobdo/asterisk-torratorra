@@ -1,0 +1,80 @@
+#!/var/lib/asterisk/python-venv/whatsapp/bin/python3
+# -*- coding: utf-8 -*-
+
+import sys
+import requests
+import logging
+from asterisk.agi import AGI
+
+# --- CONFIGURAÇÕES WPPCONNECT ---
+WPP_URL = "http://localhost:21465/api/wpp/send-message"
+WPP_TOKEN = "$2b$10$9neIZISQEHRQp1r8wmgARO0MXfd8TPl9mgaem1Pn9DnbDSLExGFqu"
+# --- FIM ---
+
+logging.basicConfig(filename='/var/log/asterisk/whatsapp_agi.log', level=logging.INFO,
+                    format='%(asctime )s - %(levelname)s - %(message)s')
+
+def enviar_mensagem_wppconnect(cpf, nasc, cnh, telefone_cliente, destino):
+    possui_cnh = "✅ Sim" if cnh == "1" else "❌ Não"
+    
+    # Formata data de nascimento se vier sem barras
+    if len(nasc) == 8:
+        nasc = f"{nasc[:2]}/{nasc[2:4]}/{nasc[4:]}"
+
+    mensagem = (
+        f"🚨 *LEAD EM ATENDIMENTO* 🚨\n\n"
+        f"Você acabou de atender este cliente!\n\n"
+        f"👤 *Cliente:* {telefone_cliente}\n"
+        f"📄 *CPF:* {cpf}\n"
+        f"📅 *Nasc:* {nasc}\n"
+        f"🚗 *CNH:* {possui_cnh}\n"
+    )
+
+    payload = {
+        "phone": destino,
+        "message": mensagem,
+        "isGroup": False
+    }
+    
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {WPP_TOKEN}"
+    }
+
+    try:
+        logging.info(f"Enviando lead para {destino}...")
+        response = requests.post(WPP_URL, json=payload, headers=headers, timeout=10)
+        response.raise_for_status()
+        logging.info(f"Sucesso! Status: {response.status_code}")
+        return True
+    except Exception as e:
+        logging.error(f"Erro no envio: {e}")
+        return False
+
+def main():
+    # Captura os argumentos do sistema primeiro
+    if len(sys.argv) < 5:
+        logging.error("Argumentos insuficientes.")
+        sys.exit(1)
+
+    cpf_cli = sys.argv[1]
+    nasc_cli = sys.argv[2]
+    cnh_cli = sys.argv[3]
+    destino_zap = sys.argv[4]
+
+    # Tenta pegar o CallerID do Asterisk, se falhar (teste manual), usa um padrão
+    try:
+        # O segredo está aqui: não instanciamos o AGI se não houver ambiente Asterisk
+        if sys.stdin.isatty():
+            telefone_cliente = "Teste-Manual"
+        else:
+            agi = AGI()
+            telefone_cliente = agi.env.get('agi_callerid', 'Desconhecido')
+    except:
+        telefone_cliente = "Desconhecido"
+
+    enviar_mensagem_wppconnect(cpf_cli, nasc_cli, cnh_cli, telefone_cliente, destino_zap)
+
+if __name__ == "__main__":
+    main()
+

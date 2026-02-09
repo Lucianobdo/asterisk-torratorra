@@ -1,0 +1,71 @@
+; =================================================================
+; ARQUIVO DE DIALPLAN (PLANO DE DISCAGEM) - TORRA TORRA VEÍCULOS
+; VERSÃO PARA TESTES INTERNOS
+; =================================================================
+
+[general]
+static=yes
+writeprotect=no
+autofallthrough=yes
+clearglobalvars=no
+
+; =================================================================
+; CONTEXTO [interno]
+; Este contexto define o que os ramais internos podem fazer.
+; Todos os nossos ramais (1xx, 2xx, 3xx, 4xx) estão neste contexto.
+; =================================================================
+[interno]
+
+; --- Regra 1: Ligar para RAMAIS INDIVIDUAIS ---
+; O padrão _[1-4]XX corresponde a qualquer número de 3 dígitos começando com 1, 2, 3 ou 4.
+; Isso cobre todos os ramais que criamos no pjsip.conf.
+exten => _[1-4]XX,1,NoOp(>> Ligando para o ramal PJSIP: ${EXTEN} a partir de ${CALLERID(num)})
+ same => n,Dial(PJSIP/${EXTEN},25)  ; Tenta ligar para o ramal por 25 segundos
+ same => n,GoTo(resultado-chamada,s,1) ; Pula para um sub-menu para tratar o resultado
+
+; --- Regra 2: Ligar para as FILAS DE ATENDIMENTO (para teste) ---
+; Vamos usar números fáceis de lembrar para testar as filas.
+
+; Disque 5001 para testar a Fila de Vendedores
+exten => 5001,1,NoOp(>> Testando a 'fila-vendedores' a partir de ${CALLERID(num)})
+ same => n,Verbose(Estratégia de Rodízio 'rrmemory' será usada)
+ same => n,Queue(fila-vendedores) ; Envia a chamada para a fila
+ same => n,Hangup()
+
+; Disque 5002 para testar a Fila de Simulações
+exten => 5002,1,NoOp(>> Testando a 'fila-simulacoes' a partir de ${CALLERID(num)})
+ same => n,Verbose(Estratégia 'ringall' será usada)
+ same => n,Queue(fila-simulacoes)
+ same => n,Hangup()
+
+; Disque 5003 para testar a Fila de Negociação
+exten => 5003,1,NoOp(>> Testando a 'fila-negociacao' a partir de ${CALLERID(num)})
+ same => n,Verbose(Estratégia 'ringall' será usada)
+ same => n,Queue(fila-negociacao)
+ same => n,Hangup()
+
+; --- Regra 3: Teste de Eco ---
+; Permite que qualquer usuário disque *65 para testar a qualidade do áudio.
+exten => *65,1,NoOp(>> Iniciando teste de eco para o ramal ${CALLERID(num)})
+ same => n,Answer()                 ; Atende a chamada antes de tocar o áudio
+ same => n,Playback(demo-echotest)  ; Toca um áudio explicando o teste
+ same => n,Echo()                   ; Inicia o aplicativo de eco
+ same => n,Playback(demo-echodone)  ; Toca um áudio de finalização
+ same => n,Hangup()
+
+; --- Sub-contexto para tratar o resultado das chamadas para ramais ---
+[resultado-chamada]
+exten => s,1,NoOp(A chamada para ${EXTEN_ORIGINAL} terminou com o status: ${DIALSTATUS})
+ same => n,Goto(s-${DIALSTATUS},1) ; Pula para a linha correspondente ao status
+
+exten => s-BUSY,1,Playback(ss-noservice) ; Toca áudio "o número está ocupado"
+ same => n,Hangup()
+
+exten => s-NOANSWER,1,Playback(ss-noservice) ; Toca áudio "não foi possível completar" (não atendeu)
+ same => n,Hangup()
+
+exten => s-CHANUNAVAIL,1,Playback(ss-noservice) ; Toca áudio "não foi possível completar" (desligado/sem registro)
+ same => n,Hangup()
+
+exten => _s-.,1,Hangup() ; Para qualquer outro status, apenas desliga.
+

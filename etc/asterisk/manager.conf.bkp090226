@@ -1,0 +1,27 @@
+; ##################################################
+; #  CONFIGURAÇÃO BLINDADA DO MANAGER - TORRA TORRA #
+; ##################################################
+
+[general]
+enabled = yes
+port = 5038
+bindaddr = 0.0.0.0
+displayconnects = yes
+
+[admin]
+secret = torra123
+read = system,call,log,verbose,agent,user,config,dtmf,reporting,cdr,dialplan,originate
+write = system,call,log,verbose,agent,user,config,dtmf,reporting,cdr,dialplan,originate
+
+; --- REGRAS DE SEGURANÇA (ACL) ---
+; Bloqueia todo o acesso externo por padrão
+deny = 0.0.0.0/0.0.0.0
+; Permite o acesso interno do próprio servidor (Click-to-Call)
+permit = 127.0.0.1/255.255.255.255
+permit = 143.14.135.114/255.255.255.255
+; Permite a rede interna padrão do Docker
+permit = 172.17.0.0/255.255.0.0
+permit = 172.18.0.0/255.255.0.0
+
+#include manager_additional.conf
+#include manager_custom.conf

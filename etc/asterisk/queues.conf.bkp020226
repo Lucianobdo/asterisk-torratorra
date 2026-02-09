@@ -1,0 +1,75 @@
+[general]
+persistentmembers = yes
+autofill = yes
+monitor-type = MixMonitor
+shared_lastcall = yes ; << Ativa o compartilhamento global de última chamada para todos
+
+; ----------------------------------------------------------------
+; FILA DE VENDEDORES (ESTOQUE / NEGOCIAÇÃO INICIAL)
+; ----------------------------------------------------------------
+[fila-vendedores]
+strategy = leastrecent ; << DISTRIBUIÇÃO JUSTA: Toca para quem está livre há mais tempo
+shared_lastcall = yes  ; << Considera chamadas de outras filas (ex: negociação)
+timeout = 120 
+retry = 5
+wrapuptime = 20        ; << 20 segundos de descanso para o vendedor organizar o lead
+musicclass = torratorra
+announce-frequency = 30
+announce-holdtime = yes
+; Membros (Vendedores Externos)
+member => PJSIP/201
+member => PJSIP/202
+member => PJSIP/203
+member => PJSIP/204
+member => PJSIP/205
+member => PJSIP/206
+
+; ----------------------------------------------------------------
+; FILA DE SIMULAÇÕES (ATENDENTES INTERNAS)
+; ----------------------------------------------------------------
+[fila-simulacoes]
+strategy = leastrecent
+shared_lastcall = yes
+timeout = 120
+retry = 5
+wrapuptime = 20
+musicclass = torratorra
+announce-frequency = 30
+announce-holdtime = yes
+member => PJSIP/101 ; Thaynara
+member => PJSIP/102 ; Camila
+member => PJSIP/103 ; Maria
+
+; ----------------------------------------------------------------
+; FILA DE DOCUMENTAÇÃO (MESMAS ATENDENTES)
+; ----------------------------------------------------------------
+[fila-documentacao]
+strategy = leastrecent
+shared_lastcall = yes
+timeout = 120
+retry = 5
+wrapuptime = 20
+musicclass = torratorra
+announce-frequency = 30
+announce-holdtime = yes
+member => PJSIP/101
+member => PJSIP/102
+member => PJSIP/103
+
+; ----------------------------------------------------------------
+; FILA DE NEGOCIAÇÃO (VENDAS EM ANDAMENTO)
+; ----------------------------------------------------------------
+[fila-negociacao]
+strategy = leastrecent ; << DISTRIBUIÇÃO JUSTA também para negociações
+shared_lastcall = yes
+timeout = 120
+retry = 5
+wrapuptime = 20
+musicclass = torratorra
+member => PJSIP/201
+member => PJSIP/202
+member => PJSIP/203
+member => PJSIP/204
+member => PJSIP/205
+member => PJSIP/206
+

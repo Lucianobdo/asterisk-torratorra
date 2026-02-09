@@ -1,0 +1,75 @@
+[general]
+persistentmembers = yes
+autofill = yes
+monitor-type = MixMonitor
+; O parâmetro abaixo é GLOBAL. Ele já vale para todas as filas.
+shared_lastcall = yes 
+
+; ----------------------------------------------------------------
+; FILA DE VENDEDORES (ESTOQUE / NEGOCIAÇÃO INICIAL)
+; ----------------------------------------------------------------
+[fila-vendedores]
+strategy = leastrecent
+timeout = 120
+retry = 5
+wrapuptime = 20
+ringinuse = no ; << Garante que não toque se o vendedor já estiver ocupado
+musicclass = torratorra
+announce-frequency = 30
+announce-holdtime = yes
+; Membros (Vendedores Externos)
+member => PJSIP/201
+member => PJSIP/202
+member => PJSIP/203
+member => PJSIP/204
+member => PJSIP/205
+member => PJSIP/206
+
+; ----------------------------------------------------------------
+; FILA DE SIMULAÇÕES (ATENDENTES INTERNAS)
+; ----------------------------------------------------------------
+[fila-simulacoes]
+strategy = leastrecent
+timeout = 120
+retry = 5
+wrapuptime = 20
+ringinuse = no
+musicclass = torratorra
+announce-frequency = 30
+announce-holdtime = yes
+member => PJSIP/101 ; Thaynara
+member => PJSIP/102 ; Camila
+member => PJSIP/103 ; Maria
+
+; ----------------------------------------------------------------
+; FILA DE DOCUMENTAÇÃO (MESMAS ATENDENTES)
+; ----------------------------------------------------------------
+[fila-documentacao]
+strategy = leastrecent
+timeout = 120
+retry = 5
+wrapuptime = 20
+ringinuse = no
+musicclass = torratorra
+announce-frequency = 30
+announce-holdtime = yes
+member => PJSIP/101
+member => PJSIP/102
+member => PJSIP/103
+
+; ----------------------------------------------------------------
+; FILA DE NEGOCIAÇÃO (VENDAS EM ANDAMENTO)
+; ----------------------------------------------------------------
+[fila-negociacao]
+strategy = leastrecent
+timeout = 120
+retry = 5
+wrapuptime = 20
+ringinuse = no
+musicclass = torratorra
+member => PJSIP/201
+member => PJSIP/202
+member => PJSIP/203
+member => PJSIP/204
+member => PJSIP/205
+member => PJSIP/206

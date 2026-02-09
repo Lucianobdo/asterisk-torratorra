@@ -1,0 +1,165 @@
+; =================================================================
+; ARQUIVO DE CONFIGURAÇÃO PJSIP - TORRA TORRA VEÍCULOS (VERSÃO CORRIGIDA)
+; =================================================================
+
+; --- Transportes ---
+[transport-udp]
+type=transport
+protocol=udp
+bind=0.0.0.0:5060
+external_media_address = 168.138.158.51
+external_signaling_address = 168.138.158.51
+
+; --- Templates de Configuração ---
+[template-ramal](!)
+type=endpoint
+context=interno
+disallow=all
+allow=ulaw
+allow=alaw
+allow=gsm
+rtp_symmetric=yes
+force_rport=yes
+rewrite_contact=yes
+direct_media=no
+aors=ramal-aor
+auth=ramal-auth
+
+[ramal-aor](!)
+type=aor
+max_contacts=1
+
+[ramal-auth](!)
+type=auth
+auth_type=userpass
+password=torra123
+
+; ===============================================
+; RAMAIS (TODOS OS SEUS RAMAIS ESTÃO AQUI - NÃO PRECISA COLAR DE NOVO, SÓ VERIFIQUE)
+; ... (deixe todos os seus ramais 101, 201, etc. como estavam)
+; ===============================================
+[101](template-ramal)
+callerid="Thaynara" <101>
+auth=auth101
+aors=101
+[auth101](ramal-auth)
+username=101
+[101](ramal-aor)
+
+[102](template-ramal)
+callerid="Camila" <102>
+auth=auth102
+aors=102
+[auth102](ramal-auth)
+username=102
+[102](ramal-aor)
+
+[103](template-ramal)
+callerid="Maria" <103>
+auth=auth103
+aors=103
+[auth103](ramal-auth)
+username=103
+[103](ramal-aor)
+
+[201](template-ramal)
+callerid="Vendedor 01" <201>
+auth=auth201
+aors=201
+[auth201](ramal-auth)
+username=201
+[201](ramal-aor)
+
+[202](template-ramal)
+callerid="Vendedor 02" <202>
+auth=auth202
+aors=202
+[auth202](ramal-auth)
+username=202
+[202](ramal-aor)
+
+[203](template-ramal)
+callerid="Vendedor 03" <203>
+auth=auth203
+aors=203
+[auth203](ramal-auth)
+username=203
+[203](ramal-aor)
+
+[204](template-ramal)
+callerid="Vendedor 04" <204>
+auth=auth204
+aors=204
+[auth204](ramal-auth)
+username=204
+[204](ramal-aor)
+
+[205](template-ramal)
+callerid="Vendedor 05" <205>
+auth=auth205
+aors=205
+[auth205](ramal-auth)
+username=205
+[205](ramal-aor)
+
+[206](template-ramal)
+callerid="Vendedor 06" <206>
+auth=auth206
+aors=206
+[auth206](ramal-auth)
+username=206
+[206](ramal-aor)
+
+[301](template-ramal)
+callerid="Documentacao" <301>
+auth=auth301
+aors=301
+[auth301](ramal-auth)
+username=301
+[301](ramal-aor)
+
+[401](template-ramal)
+callerid="Financeiro" <401>
+auth=auth401
+aors=401
+[auth401](ramal-auth)
+username=401
+[401](ramal-aor)
+
+; =================================================================
+; CONFIGURAÇÃO DO TRONCO SIP - E2NET (VERSÃO REVISADA)
+; =================================================================
+
+[e2net-trunk]
+type=endpoint
+transport=transport-udp
+context=publico
+disallow=all
+allow=ulaw
+allow=alaw
+outbound_auth=e2net-auth
+aors=e2net-aor
+from_user=6137740802
+from_domain=sip18.e2net.com.br
+language=pt_BR
+identify_by=auth_username
+
+[e2net-auth]
+type=auth
+auth_type=userpass
+password=P0c*6137740802
+username=6137740802
+realm=sip18.e2net.com.br
+
+[e2net-aor]
+type=aor
+contact=sip:sip18.e2net.com.br:5060
+
+[e2net-register]
+type=registration
+transport=transport-udp
+outbound_auth=e2net-auth
+server_uri=sip:sip18.e2net.com.br
+client_uri=sip:6137740802@sip18.e2net.com.br
+retry_interval=60
+

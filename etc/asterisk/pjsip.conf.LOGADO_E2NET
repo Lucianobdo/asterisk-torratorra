@@ -1,0 +1,56 @@
+; ================================================================
+; CONFIGURAÇÃO PJSIP - ASTERISK (ORACLE CLOUD)
+; CLIENTE: E2NET | TRONCO: 6137740802
+; ================================================================
+
+; --- 1. TRANSPORTE (Configuração de Rede e NAT) ---
+[transport-udp]
+type=transport
+protocol=udp
+bind=0.0.0.0:5060
+; Substitua abaixo pelo IP público e rede interna da sua instância Oracle
+local_net=10.0.0.0/16
+external_signaling_address=168.138.158.51
+external_media_address=168.138.158.51
+
+; --- 2. REGISTRO NO PROVEDOR (Outbound Registration) ---
+[reg_e2net]
+type=registration
+transport=transport-udp
+outbound_auth=auth_e2net
+server_uri=sip:sip18.e2net.com.br:5060
+client_uri=sip:6137740802@sip18.e2net.com.br:5060
+contact_user=6137740802
+retry_interval=60
+expiration=3600
+
+; --- 3. AUTENTICAÇÃO DO TRONCO ---
+[auth_e2net]
+type=auth
+auth_type=userpass
+password=P0c*6137740802
+username=6137740802
+
+; --- 4. AOR (Address of Record - Onde o provedor está) ---
+[aor_e2net]
+type=aor
+contact=sip:sip18.e2net.com.br:5060
+
+; --- 5. ENDPOINT (Configurações de Chamadas e Codecs) ---
+[e2net]
+type=endpoint
+transport=transport-udp
+context=from-cifais
+disallow=all
+allow=alaw,ulaw,g729
+outbound_auth=auth_e2net
+aors=aor_e2net
+from_user=6137740802
+from_domain=sip18.e2net.com.br
+; Parâmetros Vitais para NAT na Nuvem
+rewrite_contact=yes
+force_rport=yes
+direct_media=no
+rtp_symmetric=yes
+
+

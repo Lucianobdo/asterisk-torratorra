@@ -1,0 +1,208 @@
+; ================================================================
+; ARQUIVO: pjsip.conf
+; CONFIGURAÇÃO: ORACLE CLOUD + E2NET + RAMAIS INTERNOS
+; ================================================================
+
+; --- 1. TRANSPORTE (NAT ORACLE) ---
+[transport-udp]
+type=transport
+protocol=udp
+bind=0.0.0.0:5060
+local_net=10.0.0.0/16
+; SEU IP PÚBLICO (Confirme se não mudou)
+external_signaling_address=168.138.158.51
+external_media_address=168.138.158.51
+
+; --- 2. TRONCO E2NET ---
+[reg_e2net]
+type=registration
+transport=transport-udp
+outbound_auth=auth_e2net
+server_uri=sip:sip18.e2net.com.br:5060
+client_uri=sip:6137740802@sip18.e2net.com.br:5060
+contact_user=6137740802
+retry_interval=20
+expiration=120
+
+[auth_e2net]
+type=auth
+auth_type=userpass
+password=P0c*6137740802
+username=6137740802
+
+[aor_e2net]
+type=aor
+contact=sip:sip18.e2net.com.br:5060
+
+[e2net]
+type=endpoint
+transport=transport-udp
+context=from-cifais
+disallow=all
+allow=alaw,ulaw,g729
+outbound_auth=auth_e2net
+aors=aor_e2net
+from_user=6137740802
+from_domain=sip18.e2net.com.br
+rewrite_contact=yes
+force_rport=yes
+direct_media=no
+rtp_symmetric=yes
+
+; ================================================================
+; TEMPLATES (MODELOS) PARA OS RAMAIS
+; ================================================================
+[template-ramal](!)
+type=endpoint
+context=interno
+disallow=all
+allow=ulaw,alaw,gsm
+rtp_symmetric=yes
+force_rport=yes
+rewrite_contact=yes
+direct_media=no
+; A linha abaixo garante que o ramal use a auth e aor corretos automaticamente
+; se seguirem o padrão de nome, mas vamos definir manual para segurança.
+
+[template-auth](!)
+type=auth
+auth_type=userpass
+password=torra123
+
+[template-aor](!)
+type=aor
+max_contacts=2
+remove_existing=yes
+
+; ================================================================
+; RAMAIS: ATENDIMENTO (LOJA)
+; ================================================================
+
+; --- 101 ---
+[101](template-ramal)
+auth=auth101
+aors=aor101
+callerid="Thaynara" <101>
+
+[auth101](template-auth)
+username=101
+
+[aor101](template-aor)
+
+; --- 102 ---
+[102](template-ramal)
+auth=auth102
+aors=aor102
+callerid="Camila" <102>
+
+[auth102](template-auth)
+username=102
+
+[aor102](template-aor)
+
+; --- 103 ---
+[103](template-ramal)
+auth=auth103
+aors=aor103
+callerid="Maria" <103>
+
+[auth103](template-auth)
+username=103
+
+[aor103](template-aor)
+
+; ================================================================
+; RAMAIS: VENDEDORES (PÁTIO)
+; ================================================================
+
+; --- 201 ---
+[201](template-ramal)
+auth=auth201
+aors=aor201
+callerid="Vendedor 01" <201>
+
+[auth201](template-auth)
+username=201
+
+[aor201](template-aor)
+
+; --- 202 ---
+[202](template-ramal)
+auth=auth202
+aors=aor202
+callerid="Vendedor 02" <202>
+
+[auth202](template-auth)
+username=202
+
+[aor202](template-aor)
+
+; --- 203 ---
+[203](template-ramal)
+auth=auth203
+aors=aor203
+callerid="Vendedor 03" <203>
+
+[auth203](template-auth)
+username=203
+
+[aor203](template-aor)
+
+; --- 204 ---
+[204](template-ramal)
+auth=auth204
+aors=aor204
+callerid="Vendedor 04" <204>
+
+[auth204](template-auth)
+username=204
+
+[aor204](template-aor)
+
+; --- 205 ---
+[205](template-ramal)
+auth=auth205
+aors=aor205
+callerid="Vendedor 05" <205>
+
+[auth205](template-auth)
+username=205
+
+[aor205](template-aor)
+
+; --- 206 ---
+[206](template-ramal)
+auth=auth206
+aors=aor206
+callerid="Vendedor 06" <206>
+
+[auth206](template-auth)
+username=206
+
+[aor206](template-aor)
+
+; ================================================================
+; RAMAIS: ADM / OUTROS
+; ================================================================
+
+; --- 301 ---
+[301](template-ramal)
+auth=auth301
+aors=aor301
+callerid="Documentacao" <301>
+
+[auth301](template-auth)
+username=301
+
+[aor301](template-aor)
+
+; --- 401 ---
+[401](template-ramal)
+auth=auth401
+aors=aor401
+callerid="Financeiro" <401>
+
+[auth401](template-auth)
+username=401
+
+[aor401](template-aor)

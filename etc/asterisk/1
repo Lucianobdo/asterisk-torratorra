@@ -1,0 +1,170 @@
+; =================================================================
+; ARQUIVO DE CONFIGURAÇÃO PJSIP - TORRA TORRA VEÍCULOS
+; SENHA PADRÃO PARA TODOS OS RAMAIS: torra123
+; =================================================================
+
+; --- Transportes ---
+; Define como o Asterisk se comunica via SIP.
+[transport-udp]
+type=transport
+protocol=udp
+bind=0.0.0.0:5060
+allowguest=no
+; --- Declaração do IP Externo (Essencial para Áudio/NAT) ---
+external_media_address = 168.138.158.51
+external_signaling_address = 168.138.158.51
+; --- Templates de Configuração ---
+; Usamos templates para não repetir as mesmas configurações várias vezes.
+
+[template-ramal](!)
+type=endpoint
+context=interno             ; Todas as chamadas originadas destes ramais vão para o contexto "interno"
+disallow=all
+allow=ulaw                  ; Codec padrão na América do Norte
+allow=alaw                  ; Codec padrão no Brasil/Europa
+allow=gsm                   ; Bom para baixa qualidade de internet (3G/4G)
+aors=ramal-aor              ; Link para o template de AOR (Address of Record)
+auth=ramal-auth             ; Link para o template de autenticação
+;confs NAT
+rtp_symmetric=yes
+force_rport=yes
+rewrite_contact=yes
+direct_media=no
+[ramal-aor](!)
+type=aor
+max_contacts=1              ; Permite que o ramal se registre em apenas 1 dispositivo por vez
+
+[ramal-auth](!)
+type=auth
+auth_type=userpass
+password=torra123           ; Senha definida conforme solicitado
+
+; ===============================================
+; RAMAIS DAS ATENDENTES DE SIMULAÇÃO (LOJA)
+; ===============================================
+[101](template-ramal)
+callerid="Thaynara" <101>
+auth=auth101
+aors=101
+
+[auth101](ramal-auth)
+username=101
+
+[101](ramal-aor)
+
+
+[102](template-ramal)
+callerid="Camila" <102>
+auth=auth102
+aors=102
+
+[auth102](ramal-auth)
+username=102
+
+[102](ramal-aor)
+
+
+[103](template-ramal)
+callerid="Maria" <103>
+auth=auth103
+aors=103
+
+[auth103](ramal-auth)
+username=103
+
+[103](ramal-aor)
+
+
+; ===============================================
+; RAMAIS DOS VENDEDORES (PÁTIO)
+; ===============================================
+[201](template-ramal)
+callerid="Vendedor 01" <201>
+auth=auth201
+aors=201
+
+[auth201](ramal-auth)
+username=201
+
+[201](ramal-aor)
+
+
+[202](template-ramal)
+callerid="Vendedor 02" <202>
+auth=auth202
+aors=202
+
+[auth202](ramal-auth)
+username=202
+
+[202](ramal-aor)
+
+
+[203](template-ramal)
+callerid="Vendedor 03" <203>
+auth=auth203
+aors=203
+
+[auth203](ramal-auth)
+username=203
+
+[203](ramal-aor)
+
+
+[204](template-ramal)
+callerid="Vendedor 04" <204>
+auth=auth204
+aors=204
+
+[auth204](ramal-auth)
+username=204
+
+[204](ramal-aor)
+
+
+[205](template-ramal)
+callerid="Vendedor 05" <205>
+auth=auth205
+aors=205
+
+[auth205](ramal-auth)
+username=205
+
+[205](ramal-aor)
+
+
+[206](template-ramal)
+callerid="Vendedor 06" <206>
+auth=auth206
+aors=206
+
+[auth206](ramal-auth)
+username=206
+
+[206](ramal-aor)
+
+
+; ===============================================
+; RAMAIS DOS OUTROS SETORES
+; ===============================================
+[301](template-ramal)
+callerid="Documentacao" <301>
+auth=auth301
+aors=301
+
+[auth301](ramal-auth)
+username=301
+
+[301](ramal-aor)
+
+
+[401](template-ramal)
+callerid="Financeiro" <401>
+auth=auth401
+aors=401
+
+[auth401](ramal-auth)
+username=401
+
+[401](ramal-aor)
+

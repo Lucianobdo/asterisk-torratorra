@@ -1,0 +1,76 @@
+; =================================================================
+; ARQUIVO DE CONFIGURAÇÃO DE FILAS - TORRA TORRA VEÍCULOS
+; =================================================================
+
+[general]
+persistentmembers = yes  ; Mantém os membros da fila mesmo após reiniciar o Asterisk
+autofill = yes           ; Distribui chamadas para todos os agentes disponíveis de uma vez, se a estratégia permitir
+
+; --- Template para as nossas filas ---
+; Evita repetir configurações comuns a todas as filas
+[template-fila](!)
+strategy = ringall              ; Estratégia padrão (pode ser sobrescrita em cada fila)
+servicelevel = 60               ; Para relatórios: considera uma chamada "não atendida" se esperar mais de 60s
+joinempty = yes                 ; Permite que um cliente entre na fila mesmo que não haja agentes logados
+leavewhenempty = no             ; Não derruba a chamada se o último agente sair da fila
+ringinuse = no                  ; Não chama ramais que já estão em outra ligação
+setinterfacevar = yes           ; Permite passar variáveis para os agentes (útil para integrações com CRM)
+musicclass = torratorra            ; Classe de música em espera padrão
+;
+; Áudios para a fila (opcional, mas recomendado)
+; announce-frequency = 30       ; Anuncia a posição na fila a cada 30 segundos
+; announce-holdtime = yes       ; Anuncia o tempo de espera estimado
+; queue-youarenext = queue-youarenext ; "Você é o próximo da fila"
+; queue-thereare = queue-thereare     ; "Existem"
+; queue-callswaiting = queue-callswaiting ; "chamadas em espera"
+; queue-thankyou = queue-thankyou     ; "Obrigado por esperar"
+
+; ===============================================
+; FILA 1: VENDEDORES (NOVOS CLIENTES - INFO VEÍCULOS)
+; ===============================================
+[fila-vendedores](template-fila)
+strategy = rrmemory             ; << ESTRATÉGIA DE RODÍZIO! Lembra o último a atender.
+; Adiciona os ramais dos vendedores como membros da fila
+member => PJSIP/201
+member => PJSIP/202
+member => PJSIP/203
+member => PJSIP/204
+member => PJSIP/205
+member => PJSIP/206
+
+; ===============================================
+; FILA 2: SIMULAÇÕES (ATENDENTES DA LOJA)
+; ===============================================
+[fila-simulacoes](template-fila)
+strategy = ringall              ; << TOCA PARA TODAS AO MESMO TEMPO! A primeira a atender pega.
+; Adiciona os ramais das atendentes
+member => PJSIP/101
+member => PJSIP/102
+member => PJSIP/103
+
+; ===============================================
+; FILA 3: NEGOCIAÇÃO EM ANDAMENTO
+; ===============================================
+[fila-negociacao](template-fila)
+strategy = ringall              ; << TOCA PARA TODOS OS VENDEDORES! O primeiro a atender ajuda.
+; Adiciona os mesmos ramais dos vendedores
+member => PJSIP/201
+member => PJSIP/202
+member => PJSIP/203
+member => PJSIP/204
+member => PJSIP/205
+member => PJSIP/206
+
+[fila-documentacao]
+strategy = ringall
+timeout = 15
+retry = 5
+wrapuptime = 10
+announce-frequency = 30
+announce-holdtime = yes
+musicclass = torratorra
+; Mesmas atendentes, mas em uma fila separada para relatórios e organização
+member => PJSIP/101 ; Thaynara
+member => PJSIP/102 ; Camila
+member => PJSIP/103 ; Maria
+

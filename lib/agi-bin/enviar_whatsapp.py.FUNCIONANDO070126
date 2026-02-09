@@ -1,0 +1,71 @@
+#!/var/lib/asterisk/python-venv/whatsapp/bin/python3
+# -*- coding: utf-8 -*-
+
+import sys
+from asterisk.agi import AGI
+import requests
+import logging
+
+# --- CONFIGURAÇÕES FINAIS ---
+ZAPI_INSTANCIA = "3ECD69B2D42B52EA7E312E3187FA4915"
+# Token LONGO (que aparece na URL da API)
+ZAPI_TOKEN = "F0CE8EE6722BAAB8876624BA"
+# Seu Client Token de Segurança
+CLIENT_TOKEN = "Fdaaa1bc50e174f4fa89c0c260539201fS"
+
+# Quem recebe o aviso (Seu número)
+TELEFONE_DESTINO = "5561992055198"
+# --- FIM ---
+
+logging.basicConfig(filename='/var/log/asterisk/whatsapp_agi.log', level=logging.INFO,
+                    format='%(asctime)s - %(levelname)s - %(message)s')
+
+def enviar_mensagem_zapi(cpf, nasc, cnh, telefone_cliente):
+    url = f"https://api.z-api.io/instances/{ZAPI_INSTANCIA}/token/{ZAPI_TOKEN}/send-text"
+
+    possui_cnh = "Sim" if cnh == "1" else "Não"
+
+    mensagem = (
+        f"🔔 *Nova Chamada Recebida!*\n\n"
+        f"📞 *Cliente:* {telefone_cliente}\n"
+        f"📄 *CPF:* {cpf}\n"
+        f"📅 *Nasc:* {nasc}\n"
+        f"🚗 *CNH:* {possui_cnh}\n\n"
+        f"Aguardando atendimento..."
+    )
+
+    payload = {"phone": TELEFONE_DESTINO, "message": mensagem}
+    
+    # AQUI ESTA O SEGREDO: O HEADER COM O CLIENT-TOKEN
+    headers = {
+        "Content-Type": "application/json",
+        "Client-Token": CLIENT_TOKEN
+    }
+
+    try:
+        logging.info(f"Enviando para {TELEFONE_DESTINO}...")
+        response = requests.post(url, json=payload, headers=headers)
+        response.raise_for_status()
+        logging.info(f"Sucesso! Z-API respondeu: {response.text}")
+        return True
+    except Exception as e:
+        logging.error(f"Erro Z-API: {e}")
+        return False
+
+def main():
+    agi = AGI()
+    try:
+        # Pega argumentos vindos do Dialplan (extensions.conf)
+        cpf_cliente = sys.argv[1] if len(sys.argv) > 1 else "Nao Informado"
+        nasc_cliente = sys.argv[2] if len(sys.argv) > 2 else "Nao Informado"
+        cnh_cliente = sys.argv[3] if len(sys.argv) > 3 else "0"
+
+        telefone_cliente = agi.env.get('agi_callerid', 'Desconhecido')
+
+        enviar_mensagem_zapi(cpf_cliente, nasc_cliente, cnh_cliente, telefone_cliente)
+
+    except Exception as e:
+        logging.error(f"Erro fatal no script: {e}")
+
+if __name__ == "__main__":
+    main()
